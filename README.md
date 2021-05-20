@@ -1,0 +1,2 @@
+
+disable and remove apparmor

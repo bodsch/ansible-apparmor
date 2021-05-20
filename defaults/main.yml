@@ -1,0 +1,8 @@
+---
+
+apparmor_state: stopped
+apparmor_enabled: false
+
+apparmor_installed: false
+
+...
