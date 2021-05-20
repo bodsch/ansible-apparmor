@@ -10,7 +10,9 @@
 - name: teardown
   command: |
     aa-teardown
+  register: teardown
   failed_when: false
+  changed_when: false
 
 - name: remove apparmor packages
   package:
@@ -18,7 +20,6 @@
     state: absent
   when:
     - not apparmor_installed
-
 
 - name: remove apparmor-related files or directories
   file:
