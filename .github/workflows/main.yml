@@ -48,10 +48,6 @@ jobs:
         run: |
           yamllint .
 
-      - name: ansible-lint
-        run: |
-          ansible-lint .
-
       - name: flake8
         run: |
           flake8 .
