@@ -1,28 +1,28 @@
 ---
 
 - name: shutdown services
-  service:
+  ansible.builtin.service:
     name: apparmor
     state: "{{ apparmor_state }}"
     enabled: "{{ apparmor_enabled }}"
   failed_when: false
 
 - name: teardown
-  command: |
+  ansible.builtin.command: |
     aa-teardown
   register: teardown
   failed_when: false
   changed_when: false
 
 - name: remove apparmor packages
-  package:
+  ansible.builtin.package:
     name: [ apparmor ]
     state: absent
   when:
     - not apparmor_installed
 
 - name: remove apparmor-related files or directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
