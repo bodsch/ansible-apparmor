@@ -4,8 +4,5 @@
   hosts: instance
   any_errors_fatal: false
 
-  environment:
-    NETRC: ''
-
   roles:
     - role: ansible-apparmor
