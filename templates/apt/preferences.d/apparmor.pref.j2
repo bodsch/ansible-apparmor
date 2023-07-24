@@ -1,0 +1,8 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+{% for p in apparmor_block.packages %}
+
+Package: {{ p }}
+Pin: release *
+Pin-Priority: -1
+{% endfor %}

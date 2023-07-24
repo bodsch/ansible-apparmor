@@ -5,4 +5,13 @@ apparmor_enabled: false
 
 apparmor_installed: false
 
+apparmor_block:
+  later_installation: true
+  packages:
+    - apparmor
+    - apparmor-profiles
+    - apparmor-profiles-extra
+    - apparmor-notify
+    - apparmor-utils
+    - dh-apparmor
 ...

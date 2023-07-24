@@ -1,24 +1,133 @@
 ---
 
+- name: detect apparmor mode
+  ansible.builtin.stat:
+    path: /sys/module/apparmor/parameters/mode
+  register: stat_apparmor_mode
+
+- name: apparmor mode
+  when:
+    - stat_apparmor_mode.stat is defined
+    - stat_apparmor_mode.stat.exists
+  block:
+    - name: detect activated apparmor
+      ansible.builtin.slurp:
+        src: /sys/module/apparmor/parameters/mode
+      register: _apparmor_mode
+
+    - name: define apparmor_mode
+      ansible.builtin.set_fact:
+        apparmor_mode: "{{ _apparmor_mode.content | b64decode | lower }}"
+
+    - name: apparmor mode
+      ansible.builtin.debug:
+        msg: "{{ apparmor_mode }}"
+
+    - name: enable complain mode
+      when:
+        - apparmor_mode == "enforce"
+      ansible.builtin.shell:
+        cmd: echo -n complain > /sys/module/apparmor/parameters/mode
+      register: apparmor_complain_mode
+      failed_when: false
+      changed_when: false
+
+- name: detect apparmor libs
+  ansible.builtin.stat:
+    path: /usr/lib/apparmor
+  register: stat_apparmor_libs
+
+- name: disable apparmor profiles and teardown all profiles
+  when:
+    - stat_apparmor_libs.stat is defined
+    - stat_apparmor_libs.stat.exists
+  block:
+
+    - name: detect apparmor utils
+      ansible.builtin.stat:
+        path: /usr/sbin/aa-teardown
+      register: stat_apparmor_utils
+
+    - name: install apparmor-utils
+      ansible.builtin.package:
+        name:
+          - apparmor-utils
+        state: present
+      when:
+        - stat_apparmor_utils.stat is defined
+        - not stat_apparmor_utils.stat.exists
+
+    - name: apparmor_status
+      ansible.builtin.command:
+        cmd: /usr/sbin/apparmor_status
+      register: output_apparmor_status
+      failed_when: false
+      changed_when: false
+
+    - name: disable apparmor profiles
+      ansible.builtin.command:
+        cmd: aa-disable /etc/apparmor.d/*
+      register: teardown
+      failed_when: false
+      changed_when: false
+
+    - name: teardown apparmor
+      ansible.builtin.command:
+        cmd: aa-teardown
+      register: teardown
+      failed_when: false
+      changed_when: false
+
+- name: detect apparmor mode
+  ansible.builtin.stat:
+    path: /sys/module/apparmor/parameters/enabled
+  register: stat_apparmor_enabled
+
+- name: detect activated apparmor
+  ansible.builtin.slurp:
+    src: /sys/module/apparmor/parameters/enabled
+  register: _apparmor_enabled
+  when:
+    - stat_apparmor_enabled.stat is defined
+    - stat_apparmor_enabled.stat.exists
+
+- name: apparmor is activ
+  ansible.builtin.debug:
+    msg: apparmor ist activ
+  when:
+    - _apparmor_enabled.content is defined
+    - _apparmor_enabled.content | b64decode | lower | first == "y"
+
+- name: detect systemd unit file
+  ansible.builtin.stat:
+    path: /etc/systemd/system/sysinit.target.wants/apparmor.service
+  register: stat_apparmor_systemd
+
 - name: shutdown services
   ansible.builtin.service:
     name: apparmor
     state: "{{ apparmor_state }}"
     enabled: "{{ apparmor_enabled }}"
+  when:
+    - stat_apparmor_systemd.stat is defined
+    - stat_apparmor_systemd.stat.exists
   failed_when: false
 
-- name: teardown
-  ansible.builtin.command: |
-    aa-teardown
-  register: teardown
-  failed_when: false
-  changed_when: false
+- name: detect apparmor_parser
+  ansible.builtin.stat:
+    path: /sbin/apparmor_parser
+  register: stat_apparmor_parser
 
 - name: remove apparmor packages
   ansible.builtin.package:
-    name: [ apparmor ]
+    name:
+      - apparmor
+      - apparmor-utils
     state: absent
+    purge: true
   when:
+    - stat_apparmor_systemd.stat is defined
+    - stat_apparmor_systemd.stat.exists
     - not apparmor_installed
 
 - name: remove apparmor-related files or directories
@@ -32,10 +141,26 @@
     - /etc/rcS.d/K01apparmor
     - /etc/init.d/apparmor
     - /usr/lib/apparmor
-    - /var/lib/snapd/apparmor
+    - /var/lib/apparmor/apparmor
     - /var/cache/apparmor
     - /etc/systemd/system/apparmor.service
   when:
     - not apparmor_installed
+
+- name: block installation
+  when:
+    - apparmor_block.packages is defined
+    - apparmor_block.packages | count > 0
+  block:
+    - name: block later installations of apparmor
+      ansible.builtin.template:
+        src: apt/preferences.d/apparmor.pref.j2
+        dest: /etc/apt/preferences.d/apparmor.pref
+        mode: 0644
+      notify:
+        - clean apt cache
+        - update package cache
+      when:
+        - apparmor_block.later_installation
 
 ...
