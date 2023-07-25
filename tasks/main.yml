@@ -128,7 +128,7 @@
   when:
     - stat_apparmor_systemd.stat is defined
     - stat_apparmor_systemd.stat.exists
-    - not apparmor_installed
+    - apparmor_purge
 
 - name: remove apparmor-related files or directories
   ansible.builtin.file:
@@ -145,12 +145,13 @@
     - /var/cache/apparmor
     - /etc/systemd/system/apparmor.service
   when:
-    - not apparmor_installed
+    - apparmor_purge
 
 - name: block installation
   when:
     - apparmor_block.packages is defined
     - apparmor_block.packages | count > 0
+    - apparmor_purge
   block:
     - name: block later installations of apparmor
       ansible.builtin.template:

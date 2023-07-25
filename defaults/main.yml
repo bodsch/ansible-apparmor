@@ -3,7 +3,7 @@
 apparmor_state: stopped
 apparmor_enabled: false
 
-apparmor_installed: false
+apparmor_purge: true
 
 apparmor_block:
   later_installation: true

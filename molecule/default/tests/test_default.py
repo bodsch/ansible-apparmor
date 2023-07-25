@@ -64,7 +64,8 @@ def test_directories(host, dirs):
 
 @pytest.mark.parametrize("files", [
     "/etc/init.d/apparmor",
-    "/etc/systemd/system/apparmor.service"
+    "/etc/systemd/system/apparmor.service",
+    "/etc/systemd/system/sysinit.target.wants/apparmor.service"
 ])
 def test_files(host, files):
     f = host.file(files)

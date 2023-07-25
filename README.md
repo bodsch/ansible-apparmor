@@ -19,7 +19,7 @@ disable and remove apparmor
 
 Tested on
 
-- Debian 10 / 11
+- Debian 10 / 11 / 12
 - Ubuntu 20.04 / 22.04
 
 
@@ -40,7 +40,17 @@ If you want to use something stable, please use a [Tagged Version](https://githu
 apparmor_state: stopped
 apparmor_enabled: false
 
-apparmor_installed: false
+apparmor_purge: true
+
+apparmor_block:
+  later_installation: true
+  packages:
+    - apparmor
+    - apparmor-profiles
+    - apparmor-profiles-extra
+    - apparmor-notify
+    - apparmor-utils
+    - dh-apparmor
 ```
 
 ---
